@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resurgence City Schools Staff Portal</title>
+<style>
+:root{--navy:#241075;--orange:#f58220;--green:#0a9652;--red:#e51b23;--bg:#f4f6fb;--line:#e5e7ef}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#111}
+button{border:0;border-radius:14px;padding:13px 16px;background:var(--navy);color:#fff;font-weight:800;font-size:16px;cursor:pointer}
+button.green{background:var(--green)}button.red{background:var(--red)}button.light{background:#fff;color:var(--navy);border:1px solid var(--line)}
+input,select,textarea{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
+textarea{min-height:120px}label{font-size:13px;color:#475467;font-weight:800}.hide{display:none!important}
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 8px 25px #00000010}
+.login{max-width:450px;width:100%}.logo{width:125px;height:125px;object-fit:contain}
+h1,h2,h3{color:var(--navy)}.brand{text-align:center;font-weight:900;color:var(--navy);font-size:21px}.sub{text-align:center;font-weight:900;color:var(--red);margin-bottom:16px}
+.top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px;display:flex;align-items:center;gap:10px}
+.top img{width:48px;height:48px;object-fit:contain}.spacer{flex:1}.tabs{display:flex;gap:8px;overflow:auto;padding:10px;background:#fff;border-bottom:1px solid var(--line)}
+.tabs button{white-space:nowrap;background:#eef0f6;color:#111}.tabs button.active{background:var(--navy);color:#fff}
+.wrap{max-width:900px;margin:auto;padding:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+.row{display:flex;gap:8px;flex-wrap:wrap}.muted{color:#667085}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 18px;border-radius:999px;display:none;z-index:20;max-width:92%}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login" class="center">
+<form id="loginForm" class="card login">
+<center><img class="logo" src="logo.png" alt="Resurgence City Schools logo"></center>
+<div class="brand">RESURGENCE CITY SCHOOLS</div>
+<div class="sub">STAFF PORTAL</div>
+<label>Staff Username</label>
+<input id="username" autocomplete="username">
+<br><br>
+<label>Password</label>
+<input id="password" type="password" autocomplete="current-password">
+<br><br>
+<button type="submit" class="green" style="width:100%">STAFF LOGIN</button>
+<br><br>
+<a href="index.html" style="display:block;text-align:center;color:#241075;font-weight:800">Admin Login</a>
+</form>
+</div>
+
+<div id="app" class="hide">
+<div class="top">
+<img src="logo.png" alt="Resurgence City Schools logo">
+<b>RCS<br>Staff Portal</b>
+<span id="who"></span><div class="spacer"></div>
+<button class="light" id="logout">Logout</button>
+</div>
+<div id="tabs" class="tabs"></div>
+<div class="wrap"><div id="main"></div></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var API=window.CAC_API_BASE||window.location.origin;
+var currentUser=null;
+
+function $(id){return document.getElementById(id)}
+function toast(msg){var t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none'},2800)}
+function token(){try{return localStorage.getItem('resurgence_cloud_token')||''}catch(e){return ''}}
+function headers(){var h={'Content-Type':'application/json'},t=token();if(t)h.Authorization='Bearer '+t;return h}
+function stateGet(k,d){try{var x=localStorage.getItem(k);return x?JSON.parse(x):d}catch(e){return d}}
+function applyState(s){if(!s)return;Object.keys(s).forEach(function(k){try{localStorage.setItem(k,JSON.stringify(s[k]))}catch(e){}})}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function today(){return new Date().toISOString().slice(0,10)}
+function now(){return new Date().toLocaleTimeString()}
+function people(){return stateGet('rcs_people',[])}
+function attendance(){return stateGet('rcs_att',[])}
+function reports(){return stateGet('resurgence_daily_reports',[])}
+
+async function login(u,p){
+ try{
+  var r=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  var x=await r.json();
+  if(!r.ok)throw new Error(x.error||'Login failed');
+  if(!x.user||String(x.user.role||'').toLowerCase()!=='staff')throw new Error('This portal is for Staff accounts only.');
+  localStorage.setItem('resurgence_cloud_token',x.token);
+  applyState(x.state);
+  currentUser=x.user;
+  localStorage.setItem('resurgence_staff_portal_user',JSON.stringify(currentUser));
+  showApp();
+ }catch(e){toast(e.message||'Unable to log in')}
+}
+
+function staffRecord(){
+ return people().find(function(p){
+  return p&&String(p.role||'').toLowerCase()==='staff'&&
+   (String(p.uid||'')===String(currentUser.uid||'')||String(p.uid||'')===String(currentUser.username||''));
+ });
+}
+
+function makeTabs(){
+ $('tabs').innerHTML=
+  '<button data-page="clock">Staff Clock In/Out</button>'+
+  '<button data-page="daily">Daily Activities Report</button>';
+ Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+  b.onclick=function(){nav(this.getAttribute('data-page'))}
+ });
+}
+
+function nav(page){
+ Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+  b.classList.toggle('active',b.getAttribute('data-page')===page)
+ });
+ if(page==='clock')clockPage();
+ if(page==='daily')dailyPage();
+}
+
+function clockPage(){
+ var p=staffRecord();
+ if(!p){$('main').innerHTML='<div class="card"><h2>Staff record not found</h2><p>Please contact Admin.</p></div>';return}
+ var rows=attendance().filter(function(r){
+  return String(r.uid)===String(p.uid)&&(r.session==='Clock In'||r.session==='Clock Out')
+ });
+ var todayRows=rows.filter(function(r){return r.date===today()});
+ var last=todayRows.length?todayRows[todayRows.length-1]:null;
+
+ $('main').innerHTML=
+ '<div class="card"><h2>Staff Clock In/Out</h2>'+
+ '<h3>'+esc(p.name)+'</h3>'+
+ '<p><b>Staff ID:</b> '+esc(p.uid)+'</p>'+
+ '<h1>'+now()+'</h1>'+
+ '<div class="row"><button class="green" id="cin">Clock In</button><button class="red" id="cout">Clock Out</button></div>'+
+ '<p class="muted">You can clock in and out as required.</p></div><br>'+
+ '<div class="card"><h3>My Recent Clock Records</h3>'+
+ '<div>'+rows.slice(-20).reverse().map(function(r){
+  return '<p><b>'+esc(r.date)+'</b> — '+esc(r.time)+' — '+esc(r.session)+'</p>'
+ }).join('')+'</div></div>';
+
+ $('cin').onclick=function(){
+  var a=attendance();
+  a.push({date:today(),time:now(),uid:p.uid,name:p.name,role:'Staff',
+   classDept:p.classDept||'',session:'Clock In',status:'Present',scanner:'Self'});
+  saveAttendance(a,'Clock In');
+ };
+ $('cout').onclick=function(){
+  var a=attendance(),day=a.filter(function(r){return String(r.uid)===String(p.uid)&&r.date===today()}),last=day.length?day[day.length-1]:null;
+  if(!last||last.session!=='Clock In')return toast('Clock In first before Clock Out.');
+  a.push({date:today(),time:now(),uid:p.uid,name:p.name,role:'Staff',
+   classDept:p.classDept||'',session:'Clock Out',status:'Present',scanner:'Self'});
+  saveAttendance(a,'Clock Out');
+ };
+}
+
+async function saveAttendance(a,msg){
+ try{
+  var r=await fetch(API+'/api/attendance/sync',{method:'POST',headers:headers(),body:JSON.stringify({value:a})});
+  var x=await r.json();if(!r.ok)throw new Error(x.error||'Cloud save failed');
+  applyState(x.state||{rcs_att:a});toast(msg+' saved');clockPage();
+ }catch(e){toast(e.message||'Cloud save failed')}
+}
+
+function dailyPage(){
+ var p=staffRecord();
+ if(!p){$('main').innerHTML='<div class="card"><p>Staff record not found.</p></div>';return}
+ var date=today(),tm=now();
+ $('main').innerHTML=
+ '<div class="card"><h2>Daily Activities Report</h2>'+
+ '<p class="muted">Complete and submit your daily report to Admin.</p>'+
+ '<div class="grid">'+
+ '<div><label>Name</label><input id="arName" readonly value="'+esc(p.name)+'"></div>'+
+ '<div><label>Date</label><input id="arDate" type="date" readonly value="'+date+'"></div>'+
+ '<div><label>Time</label><input id="arTime" readonly value="'+esc(tm)+'"></div>'+
+ '<div><label>Job Role</label><input id="arRole" readonly value="'+esc(p.classDept||'')+'"></div>'+
+ '<div><label>Supervisor</label><input id="arSup" readonly value="'+esc(p.supervisor||'')+'"></div>'+
+ '<div><label>Mode of Supervision</label><select id="arMode"><option>Onsite</option><option>Remote</option></select></div>'+
+ '<div class="full"><label>What are your major challenges that affected your performance, which needs to be taken into consideration?</label><textarea id="arChallenges"></textarea></div>'+
+ '<div class="full"><label>What are your major achievements at work today?</label><textarea id="arAchievements"></textarea></div>'+
+ '<div class="full"><label>General report on incident and activities done according to your job role:</label><textarea id="arActivities"></textarea></div>'+
+ '<div><label>Do you have unfinished task that needs to be completed in next shift?</label><select id="arUnfinished"><option>No</option><option>Yes</option></select></div>'+
+ '<div id="details"><label>If yes, give details</label><textarea id="arDetails"></textarea></div>'+
+ '<div class="full"><button class="green" id="submit">Submit Daily Report</button></div>'+
+ '</div></div>';
+ $('details').style.display='none';
+ $('arUnfinished').onchange=function(){$('details').style.display=this.value==='Yes'?'block':'none'};
+ $('submit').onclick=submitReport;
+}
+
+async function submitReport(){
+ var p=staffRecord();
+ var challenges=$('arChallenges').value.trim(),achievements=$('arAchievements').value.trim(),activities=$('arActivities').value.trim();
+ var unfinished=$('arUnfinished').value,details=$('arDetails').value.trim();
+ if(!challenges||!achievements||!activities)return toast('Please complete the three main report sections.');
+ if(unfinished==='Yes'&&!details)return toast('Please give details of the unfinished task.');
+ var r={
+  id:'DAR-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),
+  uid:p.uid,name:p.name,date:$('arDate').value,time:$('arTime').value,
+  jobRole:p.classDept||'',supervisor:p.supervisor||'',mode:$('arMode').value,
+  challenges:challenges,achievements:achievements,activities:activities,
+  unfinished:unfinished,unfinishedDetails:details,
+  week:weekKey($('arDate').value),month:$('arDate').value.slice(0,7)
+ };
+ var a=reports();a.push(r);
+ try{
+  $('submit').disabled=true;$('submit').textContent='Submitting...';
+  var resp=await fetch(API+'/api/snapshot/resurgence_daily_reports',{method:'POST',headers:headers(),body:JSON.stringify({value:a})});
+  var x=await resp.json();if(!resp.ok)throw new Error(x.error||'Cloud save failed');
+  applyState(x.state||{resurgence_daily_reports:a});
+  toast('Daily report submitted to Admin');
+  nav('daily');
+ }catch(e){$('submit').disabled=false;$('submit').textContent='Submit Daily Report';toast(e.message||'Cloud save failed')}
+}
+function weekKey(d){
+ var x=new Date(d+'T00:00:00'),day=x.getDay()||7;
+ x.setDate(x.getDate()-day+1);
+ return x.toISOString().slice(0,10);
+}
+
+function showApp(){
+ $('login').classList.add('hide');$('app').classList.remove('hide');
+ $('who').textContent=currentUser.name+' (Staff)';
+ makeTabs();nav('clock');
+}
+function logout(){
+ currentUser=null;
+ try{localStorage.removeItem('resurgence_cloud_token');localStorage.removeItem('resurgence_staff_portal_user')}catch(e){}
+ $('app').classList.add('hide');$('login').classList.remove('hide');
+}
+async function restore(){
+ var saved=stateGet('resurgence_staff_portal_user',null),t=token();
+ if(!saved||!t)return;
+ try{
+  var r=await fetch(API+'/api/state',{headers:headers()});
+  if(!r.ok)throw new Error();
+  var x=await r.json();applyState(x);currentUser=saved;showApp();
+ }catch(e){logout()}
+}
+$('loginForm').onsubmit=function(e){e.preventDefault();login($('username').value.trim().toLowerCase(),$('password').value)}
+$('logout').onclick=logout;
+restore();
+})();
+</script>
+</body>
+</html>
