@@ -54,7 +54,7 @@ async function syncAuthFromUsers(users){
   await client.query('BEGIN'); const keep=new Set();
   for(const raw of rows){if(!raw)continue;
    const username=String(raw.username||'').trim().toLowerCase(); if(!username)continue;
-   const role=normalizeRole(raw.role); if(!['Admin','Staff','Student'].includes(role))continue;
+   const role=normalizeRole(raw.role); if(!['Admin','Staff','Student','Parent'].includes(role))continue;
    const uid=raw.uid?String(raw.uid):null, name=String(raw.name||username), active=raw.active===false?false:true;
    const existing=await client.query('SELECT password_hash FROM auth WHERE username=$1',[username]);
    let hash=existing.rowCount?existing.rows[0].password_hash:null; const pw=raw.password!=null?String(raw.password):'';
