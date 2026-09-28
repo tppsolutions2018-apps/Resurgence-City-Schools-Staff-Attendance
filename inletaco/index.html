@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INLETACO Conference Registration</title><style>
+*{box-sizing:border-box}body{margin:0;background:#eee;font-family:Arial,sans-serif;color:#fff}.wrap{max-width:1080px;margin:30px auto;background:#69aa50;padding:34px;box-shadow:0 4px 20px #0002}.logo{background:#fff;color:#244;text-align:center;font-weight:800;padding:35px;font-size:25px;margin-bottom:28px}h1{text-align:center;color:#ffe51b;font-size:44px;margin:12px 0}.sub{text-align:center;color:#ffe51b}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}label{display:block;font-weight:700;margin:7px 0 8px;font-size:17px}input,select,textarea{width:100%;padding:14px;border:0;border-radius:6px;font-size:16px}textarea{min-height:100px}.radio{display:flex;gap:22px}.radio label{font-weight:400}.radio input{width:auto}.help{font-size:13px;font-style:italic;line-height:1.45}.notice{background:#fff;color:#222;padding:15px;border-radius:6px;margin:25px 0}.btn{background:#00e600;border:0;border-radius:6px;padding:16px 25px;font-size:19px;font-weight:700;cursor:pointer}.hidden{display:none}@media(max-width:720px){.wrap{margin:0;padding:18px}.grid{grid-template-columns:1fr}h1{font-size:32px}}</style></head><body><main class="wrap">
+<div class="logo">INLETACO • SCHOOL PREFECTS • LEADERSHIP • INTERNATIONAL TALENT & AWARD CONFERENCE</div>
+<h1>INLETACO Conference Registration Form</h1><p class="sub">School Registration form for participation</p>
+<form id="f"><div class="grid">
+<div><label>PARTICIPANT</label><select id="participant"><option>School</option></select></div><div></div>
+<div><label>COORDINATOR'S FIRST NAME *</label><input id="first" required></div><div><label>COORDINATOR'S LAST NAME *</label><input id="last" required></div>
+<div><label>SCHOOL NAME *</label><input id="school" required></div><div><label>Email</label><input id="email" type="email"></div>
+<div><label>Address *</label><input id="address" required></div><div><label>Phone</label><input id="phone" type="tel"></div>
+<div><label>State / Province / Region *</label><input id="state" required></div><div><label>Country *</label><select id="country" required><option value="">Country</option><option>Nigeria</option><option>Ghana</option><option>United Kingdom</option><option>United States</option><option>Other</option></select></div>
+<div><label>Do you require transportation? *</label><div class="radio"><label><input type="radio" name="transport" value="Yes" required> Yes</label><label><input type="radio" name="transport" value="No"> No</label></div></div>
+<div><label>Would you like a discount of N200 on each participant? *</label><div class="radio"><label><input type="radio" name="discount" value="Yes" required> Yes</label><label><input type="radio" name="discount" value="No"> No</label></div><div class="help">The school can withdraw N200 to support student's travel.</div></div>
+<div><label>PREFECT ALBUM BOOKLET</label><div class="radio"><label><input type="radio" name="album" value="Yes"> Yes</label><label><input type="radio" name="album" value="No"> No</label></div></div>
+<div><label>LOCATION OF PARTICIPATION</label><div class="radio"><label><input type="radio" name="location" value="Ogun State"> Ogun State</label><label><input type="radio" name="location" value="Lagos State"> Lagos State</label></div></div>
+<div><label>UPLOAD PREFECT GROUP PICTURE</label><input id="group" type="file" accept="image/*"></div><div><label>UPLOAD SCHOOL LOGO</label><input id="logo" type="file" accept="image/*"></div>
+<div><label>Will your students be debating? *</label><div class="radio"><label><input type="radio" name="debate" value="YES" required> YES</label><label><input type="radio" name="debate" value="NO"> NO</label></div><div class="help">Virtual debate. Record your best student and send the video to +447448826297.</div></div>
+<div id="topicBox"><label>See the topic</label><select id="topic"><option>MOTION: Women makes better leaders than men</option></select></div>
+<div><label>IS YOUR DEBATE VIDEO READY?</label><div class="radio"><label><input type="radio" name="videoReady" value="Yes"> Yes</label><label><input type="radio" name="videoReady" value="No"> No</label></div></div>
+<div><label>UPLOAD DEBATE VIDEO IF AVAILABLE</label><input id="video" type="file" accept="video/*"></div>
+<div><label>Did your school attend last year's Prefect Summit? *</label><div class="radio"><label><input type="radio" name="previous" value="YES" required> YES</label><label><input type="radio" name="previous" value="NO"> NO</label></div></div>
+<div><label>Share your experience</label><textarea id="experience" placeholder="Just tell us if the previous prefect enjoyed it or not."></textarea></div>
+</div>
+<div class="notice"><b>WhatsApp submission:</b> Submit opens WhatsApp to <b>+234 706 303 2331</b> with the registration details pre-filled. The participant taps <b>Send</b>. Uploaded files cannot be automatically attached through a WhatsApp link; their filenames are included in the message.</div>
+<button class="btn" type="submit">Submit Registration to WhatsApp</button></form></main>
+<script>
+const q=s=>document.querySelector(s),v=n=>{const x=q('input[name="'+n+'"]:checked');return x?x.value:"Not selected"},fn=id=>q("#"+id).files[0]?.name||"Not uploaded";
+q("#f").onsubmit=e=>{e.preventDefault();let m=`INLETACO CONFERENCE REGISTRATION
+
+Participant: ${q("#participant").value}
+Coordinator: ${q("#first").value} ${q("#last").value}
+School Name: ${q("#school").value}
+Email: ${q("#email").value||"Not provided"}
+Phone: ${q("#phone").value||"Not provided"}
+
+Address: ${q("#address").value}
+State/Region: ${q("#state").value}
+Country: ${q("#country").value}
+Transportation: ${v("transport")}
+N200 Participant Discount: ${v("discount")}
+Prefect Album Booklet: ${v("album")}
+Location of Participation: ${v("location")}
+
+Prefect Group Picture: ${fn("group")}
+School Logo: ${fn("logo")}
+
+Students Debating: ${v("debate")}
+Debate Topic: ${q("#topic").value}
+Debate Video Ready: ${v("videoReady")}
+Debate Video File: ${fn("video")}
+
+Previous Prefect Summit: ${v("previous")}
+Experience: ${q("#experience").value||"Not provided"}
+
+Please confirm this registration.`;location.href="https://wa.me/2347063032331?text="+encodeURIComponent(m)};
+</script></body></html>
