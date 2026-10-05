@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node server/server.js"
   },
+  "engines": {
+    "node": "20"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "express": "^5.1.0",
