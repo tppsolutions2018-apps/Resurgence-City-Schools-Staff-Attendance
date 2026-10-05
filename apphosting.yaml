@@ -1,0 +1,29 @@
+# Firebase App Hosting configuration for Resurgence City Schools Staff Attendance.
+# Secrets are intentionally referenced by name and are NOT stored in GitHub.
+#
+# Create these secrets in Firebase App Hosting before the first rollout:
+#   DATABASE_URL  - PostgreSQL connection string
+#   JWT_SECRET    - random secret, at least 32 characters
+#   ADMIN_PASS    - initial administrator password, at least 8 characters
+#
+# ADMIN_USER may remain "admin" or be changed in the Firebase console.
+
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+scripts:
+  runCommand: node server/server.js
+
+env:
+  - variable: DATABASE_URL
+    secret: DATABASE_URL
+  - variable: JWT_SECRET
+    secret: JWT_SECRET
+  - variable: ADMIN_PASS
+    secret: ADMIN_PASS
+  - variable: ADMIN_USER
+    value: admin
