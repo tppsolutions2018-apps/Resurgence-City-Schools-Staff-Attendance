@@ -79,6 +79,17 @@ app.put('/api/registrations/:id', requireAdmin, async (req,res) => {
     res.json({ok:true});
   } catch(e) { console.error('Registration update failed:',e.message); res.status(503).json({error:'Could not update this registration.'}); }
 });
+app.put('/api/registrations/:id/self-edit', async (req,res) => {
+  try {
+    await initDb();
+    const r = req.body || {};
+    if (!r.verificationTelephone || !r.schoolName || !String(r.schoolName).trim() || !r.telephone || !String(r.telephone).trim() || !Number.isInteger(Number(r.studentCount)) || Number(r.studentCount) < 1 || !Number.isFinite(Number(r.amountPaid)) || Number(r.amountPaid) < 0 || !['Transfer','Cash'].includes(r.paymentMethod) || !['Yes','No'].includes(r.debating) || !['Yes','No'].includes(r.videoSubmitted)) return res.status(400).json({error:'Please provide valid values for all fields and the current registered telephone number.'});
+    const q = await pool.query("UPDATE school_registrations SET school_name=$3, telephone=$4, student_count=$5, amount_paid=$6, payment_method=$7, debating=$8, video_submitted=$9 WHERE id=$1 AND telephone=$2 RETURNING id",
+      [req.params.id, String(r.verificationTelephone).trim(), String(r.schoolName).trim(), String(r.telephone).trim(), Number(r.studentCount), Number(r.amountPaid), r.paymentMethod, r.debating, r.videoSubmitted]);
+    if (!q.rowCount) return res.status(403).json({error:'Could not verify this registration. Check that you are editing the original registration on the device where it was saved, and that its registered telephone number has not changed.'});
+    res.json({ok:true});
+  } catch(e) { console.error('Self-edit failed:',e.message); res.status(503).json({error:'Could not update central registration. Please try again when the server is available.'}); }
+});
 app.get('/api/registrations', requireAdmin, async (req,res) => {
   try {
     await initDb();
