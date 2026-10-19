@@ -1,0 +1,14 @@
+{
+  "name": "inletaco-school-registration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline-capable INLETACO school registration portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}
