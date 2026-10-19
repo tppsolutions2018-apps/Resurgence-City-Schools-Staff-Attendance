@@ -69,6 +69,16 @@ app.post('/api/registrations/sync', async (req,res) => {
     res.json({ok:true,acceptedIds:saved});
   } catch(e) { console.error('Sync failed:',e.message); res.status(503).json({error:'Could not sync registrations. They remain saved on this device. Try again when the server is available.'}); }
 });
+app.put('/api/registrations/:id', requireAdmin, async (req,res) => {
+  try {
+    await initDb();
+    const r = req.body || {};
+    if (!r.schoolName || !String(r.schoolName).trim() || !r.telephone || !String(r.telephone).trim() || !Number.isInteger(Number(r.studentCount)) || Number(r.studentCount) < 1 || !Number.isFinite(Number(r.amountPaid)) || Number(r.amountPaid) < 0 || !['Transfer','Cash'].includes(r.paymentMethod) || !['Yes','No'].includes(r.debating) || !['Yes','No'].includes(r.videoSubmitted)) return res.status(400).json({error:'Please provide valid values for all registration fields.'});
+    const q = await pool.query("UPDATE school_registrations SET school_name=$2, telephone=$3, student_count=$4, amount_paid=$5, payment_method=$6, debating=$7, video_submitted=$8 WHERE id=$1 RETURNING id", [req.params.id, String(r.schoolName).trim(), String(r.telephone).trim(), Number(r.studentCount), Number(r.amountPaid), r.paymentMethod, r.debating, r.videoSubmitted]);
+    if (!q.rowCount) return res.status(404).json({error:'Registration not found.'});
+    res.json({ok:true});
+  } catch(e) { console.error('Registration update failed:',e.message); res.status(503).json({error:'Could not update this registration.'}); }
+});
 app.get('/api/registrations', requireAdmin, async (req,res) => {
   try {
     await initDb();
