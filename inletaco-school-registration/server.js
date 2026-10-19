@@ -22,9 +22,13 @@ async function initDb() {
       student_count INTEGER NOT NULL CHECK (student_count > 0),
       amount_paid NUMERIC(12,2) NOT NULL CHECK (amount_paid >= 0),
       payment_method TEXT NOT NULL CHECK (payment_method IN ('Transfer','Cash')),
+      debating TEXT NOT NULL DEFAULT 'No',
+      video_submitted TEXT NOT NULL DEFAULT 'No',
       registration_date TIMESTAMPTZ NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE school_registrations ADD COLUMN IF NOT EXISTS debating TEXT NOT NULL DEFAULT 'No';
+    ALTER TABLE school_registrations ADD COLUMN IF NOT EXISTS video_submitted TEXT NOT NULL DEFAULT 'No';
     CREATE INDEX IF NOT EXISTS school_registrations_school_name_idx ON school_registrations (school_name);
     CREATE INDEX IF NOT EXISTS school_registrations_created_at_idx ON school_registrations (created_at);
   `).catch(e => { schemaReady = null; throw e; });
@@ -56,10 +60,10 @@ app.post('/api/registrations/sync', async (req,res) => {
       const date = new Date(r.registrationDate || Date.now());
       if (Number.isNaN(date.getTime())) return res.status(400).json({error:'Invalid registration date.'});
       const q = await pool.query(`
-        INSERT INTO school_registrations (id,school_name,telephone,student_count,amount_paid,payment_method,registration_date)
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        INSERT INTO school_registrations (id,school_name,telephone,student_count,amount_paid,payment_method,debating,video_submitted,registration_date)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         ON CONFLICT (id) DO NOTHING RETURNING id
-      `,[r.id,String(r.schoolName).trim(),String(r.telephone).trim(),Number(r.studentCount),Number(r.amountPaid),r.paymentMethod,date]);
+      `,[r.id,String(r.schoolName).trim(),String(r.telephone).trim(),Number(r.studentCount),Number(r.amountPaid),r.paymentMethod,r.debating || 'No',r.videoSubmitted || 'No',date]);
       saved.push(r.id);
     }
     res.json({ok:true,acceptedIds:saved});
@@ -69,7 +73,7 @@ app.get('/api/registrations', requireAdmin, async (req,res) => {
   try {
     await initDb();
     const q = await pool.query(`SELECT id,school_name AS "schoolName",telephone,student_count AS "studentCount",
-      amount_paid::numeric AS "amountPaid",payment_method AS "paymentMethod",registration_date AS "registrationDate",created_at AS "createdAt"
+      amount_paid::numeric AS "amountPaid",payment_method AS "paymentMethod",debating,video_submitted AS "videoSubmitted",registration_date AS "registrationDate",created_at AS "createdAt"
       FROM school_registrations ORDER BY created_at DESC`);
     const totals = await pool.query(`SELECT COUNT(*)::int AS schools,COALESCE(SUM(student_count),0)::int AS students,
       COALESCE(SUM(amount_paid),0)::numeric AS amount FROM school_registrations`);
@@ -79,9 +83,9 @@ app.get('/api/registrations', requireAdmin, async (req,res) => {
 app.get('/api/export.csv', requireAdmin, async (req,res) => {
   try {
     await initDb();
-    const q = await pool.query(`SELECT school_name,telephone,student_count,amount_paid,payment_method,registration_date FROM school_registrations ORDER BY created_at DESC`);
+    const q = await pool.query(`SELECT school_name,telephone,student_count,amount_paid,payment_method,debating,video_submitted,registration_date FROM school_registrations ORDER BY created_at DESC`);
     const esc = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
-    const csv = [['School Name','Telephone','Number of Students','Amount Paid (NGN)','Payment Method','Registration Date'],...q.rows.map(r=>[r.school_name,r.telephone,r.student_count,r.amount_paid,r.payment_method,r.registration_date])].map(row=>row.map(esc).join(',')).join('\r\n');
+    const csv = [['School Name','Telephone','Number of Students','Amount Paid (NGN)','Payment Method','Will Debate','Debate Video Submitted','Registration Date'],...q.rows.map(r=>[r.school_name,r.telephone,r.student_count,r.amount_paid,r.payment_method,r.debating,r.video_submitted,r.registration_date])].map(row=>row.map(esc).join(',')).join('\r\n');
     res.setHeader('Content-Type','text/csv; charset=utf-8');
     res.setHeader('Content-Disposition','attachment; filename="inletaco-school-registrations.csv"');
     res.send('\ufeff'+csv);
