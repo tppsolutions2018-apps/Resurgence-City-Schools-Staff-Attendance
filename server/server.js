@@ -15,7 +15,7 @@ if(!ADMIN_PASS||ADMIN_PASS.length<8) throw new Error('ADMIN_PASS must be set and
 if(!DATABASE_URL) throw new Error('DATABASE_URL must be set to a Render PostgreSQL connection string.');
 
 const pool=new Pool({connectionString:DATABASE_URL,max:10,idleTimeoutMillis:30000});
-const CLASSES=['KG 1','KG2','Nur 1','Nur 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Jss 1','Jss 2','Jss 3','SS 1','SS 2','SS 3'];
+const CLASSES=['Creche','KG 1','KG2','Nur 1','Nur 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Jss 1','Jss 2','Jss 3','SS 1','SS 2','SS 3'];
 
 function normalizeRole(r){const s=String(r||'').trim().toLowerCase();if(s==='teacher'||s==='staff')return 'Staff';if(s==='admin'||s==='administrator')return 'Admin';if(s==='student')return 'Student';if(s==='parent')return 'Parent';if(s==='activity supervisor'||s==='activitysupervisor'||s==='supervisor')return 'Activity Supervisor';return String(r||'Staff')}
 function teacherClasses(person){const a=Array.isArray(person?.classNames)?person.classNames:[];const legacy=person?.className?[String(person.className)]:[];return [...new Set([...a,...legacy].filter(Boolean))]}
