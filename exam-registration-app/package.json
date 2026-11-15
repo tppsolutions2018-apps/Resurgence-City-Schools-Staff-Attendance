@@ -1,0 +1,16 @@
+{
+  "name": "resurgence-examination-registration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Resurgence City Schools examination subject registration portal",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": "20.x" },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
+  }
+}
