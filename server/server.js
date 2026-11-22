@@ -153,7 +153,7 @@ app.post('/api/mock/attempts',auth,async(req,res)=>{try{
  if(!subject||className!==actualClass)return res.status(403).json({error:'You can only practise subjects for your registered class'});
  const bank=(await getSnapshot('rcs_mock_questions',[])).filter(q=>q.active!==false&&q.className===actualClass&&q.subject===subject&&(!/^SS/i.test(actualClass)||String(q.department||'')===String(student?.department||'')));
  const used=Array.isArray(b.questionIds)?b.questionIds.map(String):[];
- const questions=bank.filter(q=>used.includes(String(q.id)));
+ if(used.length!==60)return res.status(400).json({error:'A mock attempt must contain exactly 60 questions'});const questions=bank.filter(q=>used.includes(String(q.id)));if(!['simple','hard','application'].every(level=>questions.filter(q=>q.level===level).length===20))return res.status(400).json({error:'A mock attempt must contain 20 questions from each difficulty group'});
  if(!questions.length||questions.length!==used.length)return res.status(400).json({error:'The selected mock questions are unavailable. Please refresh and try again.'});
  let score=0;const reviewed=questions.map(q=>{const answer=String(answers[q.id]||'');const correct=answer===q.correctAnswer;if(correct)score++;return {questionId:q.id,selectedAnswer:answer,correctAnswer:q.correctAnswer,correct,explanation:q.explanation||''}});
  const attempt={id:uid(),studentUid:req.user.uid,studentName:req.user.name,className:actualClass,subject,questionIds:used,answers:reviewed,score,total:questions.length,percentage:Math.round(score/questions.length*100),createdAt:new Date().toISOString()};
