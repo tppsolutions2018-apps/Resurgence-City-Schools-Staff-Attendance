@@ -33,7 +33,8 @@ async function getAllAttendance(){const r=await pool.query('SELECT payload FROM 
 
 async function sanitizeStateFor(user){
  const people=await getSnapshot('rcs_people',[]), allUsers=await getSnapshot('rcs_users',[]);
- const assignments=await getSnapshot('rcs_assignments',[]), answers=await getSnapshot('rcs_answers',[]);\n const mockQuestions=await getSnapshot('rcs_mock_questions',[]),mockAttempts=await getSnapshot('rcs_mock_attempts',[]);
+ const assignments=await getSnapshot('rcs_assignments',[]), answers=await getSnapshot('rcs_answers',[]);
+ const mockQuestions=await getSnapshot('rcs_mock_questions',[]),mockAttempts=await getSnapshot('rcs_mock_attempts',[]);
  const daily=await getSnapshot('resurgence_daily_reports',[]);
  const questions=await getSnapshot('rcs_questions',[]),comments=await getSnapshot('rcs_parent_comments',[]),results=await getSnapshot('rcs_results',[]),studentReports=await getSnapshot('rcs_student_reports',[]),teacherChat=await getSnapshot('rcs_admin_teacher_chat',[]),parentChat=await getSnapshot('rcs_admin_parent_chat',[]),assessments=await getSnapshot('rcs_assessments',[]),assessmentAnswers=await getSnapshot('rcs_assessment_answers',[]),reportCards=await getSnapshot('rcs_report_cards',[]);
  const allAtt=await getAllAttendance();
