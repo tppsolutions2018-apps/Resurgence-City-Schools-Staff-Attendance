@@ -151,7 +151,7 @@ app.post('/api/mock/attempts',auth,async(req,res)=>{try{
  const people=await getSnapshot('rcs_people',[]),student=people.find(p=>String(p.uid||'')===String(req.user.uid||''));
  const actualClass=String(student?.className||student?.assignment||'');
  if(!subject||className!==actualClass)return res.status(403).json({error:'You can only practise subjects for your registered class'});
- const bank=(await getSnapshot('rcs_mock_questions',[])).filter(q=>q.active!==false&&q.className===actualClass&&q.subject===subject);
+ const bank=(await getSnapshot('rcs_mock_questions',[])).filter(q=>q.active!==false&&q.className===actualClass&&q.subject===subject&&(!/^SS/i.test(actualClass)||String(q.department||'')===String(student?.department||'')));
  const used=Array.isArray(b.questionIds)?b.questionIds.map(String):[];
  const questions=bank.filter(q=>used.includes(String(q.id)));
  if(!questions.length||questions.length!==used.length)return res.status(400).json({error:'The selected mock questions are unavailable. Please refresh and try again.'});
