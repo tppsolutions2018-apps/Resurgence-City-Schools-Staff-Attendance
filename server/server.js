@@ -137,6 +137,15 @@ app.post('/api/mock/questions',auth,async(req,res)=>{try{
  const department=String(b.department||'').trim();if(/^SS/i.test(className)&&!['Science','Humanity','Commerce'].includes(department))return res.status(400).json({error:'Choose the correct senior secondary department'});const item={id:uid(),className,department,subject,level,question,options,correctAnswer,explanation:String(b.explanation||''),active:b.active!==false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
  arr.push(item);await saveSnapshot('rcs_mock_questions',arr);res.json({ok:true,state:await sanitizeStateFor(req.user)});
  }catch(e){console.error(e);res.status(500).json({error:'Unable to save mock question'})}});
+app.post('/api/mock/questions/bulk',auth,adminOnly,async(req,res)=>{try{
+ const items=Array.isArray(req.body?.questions)?req.body.questions:[];
+ if(!items.length||items.length>500)return res.status(400).json({error:'Submit between 1 and 500 questions at a time'});
+ const clean=[];for(let n=0;n<items.length;n++){const b=items[n]||{},className=String(b.className||'').trim(),department=String(b.department||'').trim(),subject=String(b.subject||'').trim(),question=String(b.question||'').trim(),options=Array.isArray(b.options)?b.options.map(x=>String(x||'').trim()):[],correctAnswer=String(b.correctAnswer||'').trim(),level=String(b.level||'simple');
+ if(!className||!subject||!question||options.length!==4||options.some(x=>!x)||!options.includes(correctAnswer)||!['simple','hard','application'].includes(level))return res.status(400).json({error:'Question '+(n+1)+' has missing or invalid fields'});
+ if(/^SS/i.test(className)&&!['Science','Humanity','Commerce'].includes(department))return res.status(400).json({error:'Question '+(n+1)+' needs Science, Humanity or Commerce department'});
+ clean.push({id:uid(),className,department,subject,level,question,options,correctAnswer,explanation:String(b.explanation||''),active:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})}
+ const arr=await getSnapshot('rcs_mock_questions',[]);arr.push(...clean);await saveSnapshot('rcs_mock_questions',arr);res.json({ok:true,imported:clean.length,state:await sanitizeStateFor(req.user)});
+ }catch(e){console.error(e);res.status(500).json({error:'Unable to import mock questions'})}});
 app.put('/api/mock/questions/:id',auth,adminOnly,async(req,res)=>{try{
  const arr=await getSnapshot('rcs_mock_questions',[]),i=arr.findIndex(q=>String(q.id)===String(req.params.id));if(i<0)return res.status(404).json({error:'Question not found'});
  const b=req.body||{},old=arr[i],options=Array.isArray(b.options)?b.options.map(x=>String(x||'').trim()):old.options;
